@@ -162,9 +162,20 @@ MiniBufremove.unshow_in_window = function(win_id)
     local has_previous = pcall(vim.cmd, 'bprevious')
     if has_previous and cur_buf ~= vim.api.nvim_win_get_buf(win_id) then return end
 
-    -- Create new listed buffer
-    local new_buf = vim.api.nvim_create_buf(true, false)
-    vim.api.nvim_win_set_buf(win_id, new_buf)
+    -- Open a new empty buffer or issue user configured behavior.
+    if MiniBufremove.config.empty_buf then
+      local empty = MiniBufremove.config.empty_buf
+      -- If string, we assume its a command.
+      if type(empty) == 'string' then
+        vim.cmd(empty)
+      elseif type(empty) == 'function' then
+        empty()
+      end
+    -- default is to create new listed buffer
+    else
+      local new_buf = vim.api.nvim_create_buf(true, false)
+      vim.api.nvim_win_set_buf(win_id, new_buf)
+    end
   end)
 
   return true
@@ -185,6 +196,7 @@ H.setup_config = function(config)
   vim.validate({
     set_vim_settings = { config.set_vim_settings, 'boolean' },
     silent = { config.silent, 'boolean' },
+    empty_buf = { config.empty_buf, { 'string', 'function' } }
   })
 
   return config
